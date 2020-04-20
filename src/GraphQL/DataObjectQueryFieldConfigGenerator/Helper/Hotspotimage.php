@@ -19,6 +19,7 @@ use GraphQL\Type\Definition\ResolveInfo;
 use Pimcore\Bundle\DataHubBundle\GraphQL\ElementDescriptor;
 use Pimcore\Bundle\DataHubBundle\GraphQL\Service;
 use Pimcore\Bundle\DataHubBundle\GraphQL\Traits\ServiceTrait;
+use Pimcore\Bundle\DataHubBundle\PimcoreDataHubBundle;
 use Pimcore\Bundle\DataHubBundle\WorkspaceHelper;
 use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject\ClassDefinition;
@@ -87,7 +88,11 @@ class Hotspotimage
             $image = $container->getImage();
             if ($image instanceof Asset) {
                 if (!WorkspaceHelper::isAllowed($image, $context['configuration'], 'read')) {
-                    throw new \Exception('permission denied. check your workspace settings');
+                    if (PimcoreDataHubBundle::getNotAllowedPolicy() == PimcoreDataHubBundle::NOT_ALLOWED_POLICY_EXCEPTION) {
+                        throw new \Exception('permission denied. check your workspace settings');
+                    } else {
+                        return null;
+                    }
                 }
 
                 $data = new ElementDescriptor($image);

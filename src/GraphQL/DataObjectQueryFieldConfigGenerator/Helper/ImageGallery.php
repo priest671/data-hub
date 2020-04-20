@@ -19,6 +19,7 @@ use GraphQL\Type\Definition\ResolveInfo;
 use Pimcore\Bundle\DataHubBundle\GraphQL\ElementDescriptor;
 use Pimcore\Bundle\DataHubBundle\GraphQL\Service as GraphQlService;
 use Pimcore\Bundle\DataHubBundle\GraphQL\Traits\ServiceTrait;
+use Pimcore\Bundle\DataHubBundle\PimcoreDataHubBundle;
 use Pimcore\Bundle\DataHubBundle\WorkspaceHelper;
 use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject\Data\Hotspotimage;
@@ -95,13 +96,17 @@ class ImageGallery
 
                 if ($image instanceof Asset) {
                     if (!WorkspaceHelper::isAllowed($image, $context['configuration'], 'read')) {
-                        throw new \Exception('permission denied. check your workspace settings');
+                        if (PimcoreDataHubBundle::getNotAllowedPolicy() == PimcoreDataHubBundle::NOT_ALLOWED_POLICY_EXCEPTION) {
+                            throw new \Exception('permission denied. check your workspace settings');
+                        } else {
+                            continue;
+                        }
                     }
 
                     $data = new ElementDescriptor($image);
                     $this->getGraphQlService()->extractData($data, $image, $args, $context, $resolveInfo);
 
-                    $data['data'] = $data['data'] ? base64_encode($data['data']) : null;
+                    $data['data'] = ($data['data'] ?? null) ? base64_encode($data['data']) : null;
                     $data['crop'] = $relation->getCrop();
                     $data['hotspots'] = $relation->getHotspots();
                     $data['marker'] = $relation->getMarker();
